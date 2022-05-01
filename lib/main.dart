@@ -9,11 +9,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-// import 'package:intl/intl.dart';
+import 'package:intl/intl.dart';
 
 Future<List<News>> fetchNews(http.Client client) async {
   final responce = await client.get(Uri.parse('https://kubsau.ru/api/getNews.php?key=6df2f5d38d4e16b5a923a6d4873e2ee295d0ac90'));
-  print("Status: ${responce.statusCode}"); // не выводит статус
   return compute(parseNews, responce.body);
 }
 
@@ -67,11 +66,36 @@ class NewsList extends StatelessWidget{
   @override
   Widget build(BuildContext context) {
     return GridView.builder(gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: 2, // устанавливает кол-во изображений в строке
+      crossAxisCount: 1, // устанавливает кол-во изображений в строке
     ),
       itemCount: newsL.length,
       itemBuilder: (context, index) {
-        return Image.network(newsL[index].previewP);
+        // return Image.network(newsL[index].previewP);
+        return  Card(
+          margin: const EdgeInsets.all(10),
+          shadowColor: Colors.green,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+            Image.network(newsL[index].previewP),
+            Container(child: Text(newsL[index].activeF, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400, fontStyle: FontStyle.italic), textAlign: TextAlign.left,),
+              margin: const EdgeInsets.fromLTRB(10, 10, 0, 0)),
+              Container(child: Text(newsL[index].title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, fontStyle: FontStyle.normal), textAlign: TextAlign.left,),
+                  margin: const EdgeInsets.fromLTRB(10, 10, 0, 0)),
+              const Divider(
+                color: Colors.black,
+                height: 10,
+                thickness: 1,
+                indent: 10,
+                endIndent: 10,
+              ),
+              Container(child: Text(Bidi.stripHtmlIfNeeded(newsL[index].preview), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400, fontStyle: FontStyle.italic), textAlign: TextAlign.left,),
+                  margin: const EdgeInsets.fromLTRB(10, 5, 0, 0)),
+            ],
+          ),
+        );
       },);
   }
 }
@@ -113,11 +137,11 @@ class MyHomePage extends StatelessWidget {
         future: fetchNews(http.Client()),
         builder: (context, snapshot) {
           if(snapshot.hasError) {
-            return Text(snapshot.data.toString()); // выводит null
-            print("Status: ${snapshot.data.toString()}");// не выводит принт
+            return const Text('Ошибка запроса');
           }
           else if (snapshot.hasData) {
             return NewsList(newsL: snapshot.data!);
+            // return Text('HAve date');
           } else {
             return const Center(
               child: CircularProgressIndicator(),
@@ -129,12 +153,11 @@ class MyHomePage extends StatelessWidget {
   }
 }
 
-class MyHttpOverrides extends HttpOverrides {
+
+class MyHttpOverrides extends HttpOverrides{
   @override
-  HttpClient createHttpClient(SecurityContext? context) {
+  HttpClient createHttpClient(SecurityContext? context){
     return super.createHttpClient(context)
-      ..badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
+      ..badCertificateCallback = (X509Certificate cert, String host, int port)=> true;
   }
 }
-
